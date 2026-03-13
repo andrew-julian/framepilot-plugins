@@ -1,6 +1,7 @@
 #!/bin/bash
 # setup.sh — Install dependencies for the NASA FramePilot plugin
 # Run this once after dropping the plugin into FramePilot's plugins directory.
+# Creates a self-contained Python venv inside the plugin folder.
 
 set -e
 
@@ -22,12 +23,19 @@ fi
 PY_VERSION=$(python3 --version 2>&1)
 echo "✅ $PY_VERSION"
 
-# Install Pillow
-echo "📦 Installing dependencies (Pillow)…"
-pip3 install --quiet --user -r requirements.txt && echo "✅ Dependencies installed"
+# Create (or recreate) venv inside the plugin directory
+echo "📦 Creating virtual environment…"
+python3 -m venv "$SCRIPT_DIR/venv"
+echo "✅ venv created at $SCRIPT_DIR/venv"
 
-# Make entry script executable
-chmod +x main.py && echo "✅ main.py is executable"
+# Install dependencies into the venv
+echo "📦 Installing Pillow into venv…"
+"$SCRIPT_DIR/venv/bin/pip" install --quiet -r requirements.txt
+echo "✅ Dependencies installed"
+
+# Make scripts executable
+chmod +x main.py run.sh
+echo "✅ Scripts are executable"
 
 echo ""
 echo "──────────────────────────────────────────"
@@ -35,11 +43,8 @@ echo "🔑 Optional: Get a free NASA API key"
 echo "   https://api.nasa.gov/"
 echo "   Without a key, DEMO_KEY is used (~30 req/hr limit)."
 echo ""
-echo "📁 To install the plugin, this directory should be at:"
+echo "📁 Plugin should be installed at:"
 echo "   ~/Library/Application Support/FramePilot/plugins/nasa/"
-echo ""
-echo "   If it's not already there, run:"
-echo '   cp -r "'"$SCRIPT_DIR"'" ~/Library/Application\ Support/FramePilot/plugins/nasa/'
 echo ""
 echo "Then open FramePilot → Sources → enable 'NASA Space & Earth'."
 echo ""
