@@ -1,0 +1,51 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "nasa_api_key": {
+      "type": "string",
+      "title": "NASA API Key",
+      "description": "Free key from api.nasa.gov. Leave blank to use DEMO_KEY (rate-limited to ~30 req/hr).",
+      "default": ""
+    },
+    "collections": {
+      "type": "array",
+      "title": "Collections",
+      "description": "Which NASA image sources to draw from. FramePilot picks randomly across your selection each rotation.",
+      "items": {
+        "type": "string",
+        "enum": ["apod", "epic", "mars_curiosity", "mars_perseverance", "jwst", "image_library"]
+      },
+      "enumLabels": {
+        "apod":              "Astronomy Picture of the Day",
+        "epic":              "Earth from Space (EPIC / DSCOVR)",
+        "mars_curiosity":    "Mars — Curiosity Rover",
+        "mars_perseverance": "Mars — Perseverance Rover",
+        "jwst":              "James Webb Space Telescope",
+        "image_library":     "NASA Image Library (search)"
+      },
+      "default": ["apod", "jwst"],
+      "ui:widget": "checkbox-group"
+    },
+    "image_library_query": {
+      "type": "string",
+      "title": "Image Library keyword",
+      "description": "Search term for NASA Image Library and JWST queries (e.g. 'nebula', 'galaxy', 'earth', 'aurora').",
+      "default": "nebula"
+    },
+    "prefer_hd": {
+      "type": "boolean",
+      "title": "Prefer HD images",
+      "description": "Use the highest-resolution version available. Recommended for 4K displays.",
+      "default": true
+    },
+    "max_age_days": {
+      "type": "integer",
+      "title": "Max APOD age (days)",
+      "description": "For APOD: only pick images published within this many days. Set to 0 for no limit.",
+      "default": 365,
+      "minimum": 0,
+      "maximum": 3650
+    }
+  }
+}

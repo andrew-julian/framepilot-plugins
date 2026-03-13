@@ -1,0 +1,6 @@
+id = "nasa"
+name = "NASA Space & Earth"
+icon = "🚀"
+description = "Daily imagery from NASA archives — APOD, Earth from space, Mars rovers, James Webb Telescope, and more."
+version = "1.0.0"
+entry = "main.py"
