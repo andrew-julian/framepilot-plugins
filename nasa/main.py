@@ -88,8 +88,11 @@ def cache_put(key, data):
 def http_get(url):
     """Fetch URL, return bytes. Raises on HTTP error."""
     req = urllib.request.Request(url, headers={"User-Agent": "FramePilot/1.0"})
-    with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT) as resp:
-        return resp.read()
+    try:
+        with urllib.request.urlopen(req, timeout=REQUEST_TIMEOUT) as resp:
+            return resp.read()
+    except urllib.error.HTTPError as e:
+        raise ValueError(f"HTTP Error {e.code}: {e.reason} for {url}") from e
 
 def http_get_json(url):
     return json.loads(http_get(url))
@@ -179,27 +182,46 @@ def fetch_epic():
 
 
 def fetch_mars(rover):
-    """Mars Rover photos — latest available."""
-    url = (
-        f"https://api.nasa.gov/mars-photos/api/v1/rovers/{rover}/latest_photos"
-        f"?api_key={API_KEY}"
+    """Mars Rover imagery via NASA Image Library.
+
+    The api.nasa.gov/mars-photos endpoint was decommissioned (it was a
+    third-party Heroku app). We use the NASA Image & Video Library instead,
+    which has thousands of high-quality rover images.
+    """
+    rover_queries = {
+        "curiosity":    "Curiosity rover Mars surface",
+        "perseverance": "Perseverance rover Mars Jezero",
+    }
+    q = rover_queries.get(rover, f"{rover} rover Mars")
+    encoded_q = urllib.parse.quote(q)
+    search_url = (
+        f"https://images-api.nasa.gov/search"
+        f"?q={encoded_q}&media_type=image&page_size=20"
     )
-    data = http_get_json(url)
-    photos = data.get("latest_photos", [])
-    if not photos:
-        raise ValueError(f"No photos from {rover}")
+    data = http_get_json(search_url)
+    items = data.get("collection", {}).get("items", [])
+    items = [it for it in items if it.get("href")]
+    if not items:
+        raise ValueError(f"No image library results for Mars {rover}")
 
-    # Prefer FHAZ/RHAZ/MAST cameras for scenic landscape shots
-    scenic = [p for p in photos if p.get("camera", {}).get("name") in ("MAST", "NAVCAM", "MASTL", "MAST_LEFT")]
-    pool = scenic if scenic else photos
-    photo = random.choice(pool[:20])
+    random.shuffle(items)
+    for item in items[:5]:
+        try:
+            manifest = http_get_json(item["href"])
+            jpegs = [u for u in manifest if u.lower().endswith("~orig.jpg")]
+            if not jpegs:
+                jpegs = [u for u in manifest if u.lower().endswith(".jpg")]
+            if not jpegs:
+                continue
+            nasa_id = item.get("data", [{}])[0].get("nasa_id", jpegs[0].split("/")[-1])
+            log(f"Mars {rover}: {nasa_id}")
+            raw = download_image(jpegs[0], cache_key=f"mars_{rover}_{nasa_id}")
+            return raw
+        except Exception as e:
+            log(f"Mars {rover} item failed: {e}")
+            continue
 
-    img_url = photo["img_src"]
-    photo_id = str(photo.get("id", img_url.split("/")[-1]))
-    log(f"Mars {rover}: photo {photo_id} ({photo.get('earth_date', '')})")
-
-    raw = download_image(img_url, cache_key=f"mars_{rover}_{photo_id}")
-    return raw
+    raise ValueError(f"All Mars {rover} image library results failed")
 
 
 def fetch_image_library(search_query=None):
