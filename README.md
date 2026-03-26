@@ -11,8 +11,7 @@ Each subdirectory is a self-contained, installable plugin. Drop any of them into
 | Plugin | Description |
 |--------|-------------|
 | [nasa/](./nasa/) | NASA Space & Earth — APOD, Earth from space, Mars rovers, James Webb Telescope |
-
-More coming soon.
+| [news/](./news/) | News (AFR) — Australian Financial Review, rendered spread-by-spread at 4K |
 
 ---
 
